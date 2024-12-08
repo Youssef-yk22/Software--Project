@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Course, CourseDocument } from './models/courses.schema';
@@ -30,5 +30,12 @@ export class CoursesService {
 
   async remove(id: string): Promise<Course | null> {
     return this.courseModel.findByIdAndDelete(id).exec();
+  }
+  async getEnrolledUserIds(courseId: string): Promise<object[]> {
+    const course = await this.courseModel.findById(courseId).exec();
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${courseId} not found`);
+    }
+    return course.enrolledStudents; // Assuming this field exists
   }
 }

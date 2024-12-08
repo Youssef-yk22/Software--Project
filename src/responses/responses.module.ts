@@ -12,5 +12,6 @@ import { Response, ResponseSchema } from './models/responses.schema';
   ],
   controllers: [ResponsesController],
   providers: [ResponsesService],
+  exports: [ResponsesService],
 })
 export class ResponsesModule {}

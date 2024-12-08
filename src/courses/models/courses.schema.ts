@@ -1,5 +1,5 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export type CourseDocument = Course & Document;
 
@@ -29,6 +29,25 @@ export class Course {
 
   @Prop({ type: Date, default: Date.now })
   createdAt: Date;
+
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }] })
+  enrolledStudents: Types.ObjectId[]; // References to enrolled students
+
+  @Prop({ type: [String], default: [] })
+  resources: string[]; // URLs of multimedia resources like videos or PDFs
+
+  @Prop({ type: String, enum: ['Active', 'Archived'], default: 'Active' })
+  status: 'Active' | 'Archived'; // New property to track course status
+  // Add a versions field for version control
+  @Prop({
+    type: Array,
+    default: [],
+  })
+  versions: {
+    title: string;
+    description: string;
+    updatedAt: Date;
+  }[];
 }
 
 export const CourseSchema = SchemaFactory.createForClass(Course);

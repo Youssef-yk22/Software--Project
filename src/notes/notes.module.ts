@@ -10,5 +10,6 @@ import { Note, NoteSchema } from './models/notes.schema';
   ],
   controllers: [NotesController],
   providers: [NotesService],
+  exports: [NotesService], // Export NotesService for other modules
 })
 export class NotesModule {}

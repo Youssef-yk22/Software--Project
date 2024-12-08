@@ -31,4 +31,7 @@ export class ModulesService {
   async remove(id: string): Promise<Modules | null> {
     return this.moduleModel.findByIdAndDelete(id).exec();
   }
+  async findByCourseId(courseId: string): Promise<Modules[]> {
+    return this.moduleModel.find({ courseId }).exec();
+  }
 }
