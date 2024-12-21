@@ -8,6 +8,9 @@ import {
   Param,
   Put,
   Delete,
+  HttpException,
+  HttpStatus,
+  Res,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { createUserDto } from './dto/createuser.dto';
@@ -16,6 +19,7 @@ import { UpdatePasswordDto } from './dto/updatePassword.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '../decorators/roles';
 import { RolesGuard } from '../guards/roles';
+import { Response } from 'express'; 
 
 @Controller('users')
 export class UsersController {
@@ -28,6 +32,7 @@ export class UsersController {
    */
   @Post('register')
   async register(@Body() createUserDto: createUserDto) {
+    console.log('Received payload:', createUserDto);
     return this.usersService.create(createUserDto);
   }
 
@@ -40,8 +45,25 @@ export class UsersController {
   @Post('login')
   async login(
     @Body() { email, password }: { email: string; password: string },
+    @Res() res: Response
   ) {
-    return this.usersService.login(email, password);
+    try {
+      // Attempt to login and receive a JWT token
+      const { accessToken } = await this.usersService.login(email, password);
+
+      // Set the JWT as an HTTP-only cookie
+      res.cookie('jwt', accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // Only set secure in production
+        sameSite: 'strict', // Strict mode to prevent CSRF
+      });
+
+      // Send back a success response
+      res.status(HttpStatus.OK).json({ message: 'Login successful' });
+    } catch (error) {
+      // If login fails, return an Unauthorized status
+      throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
+    }
   }
 
   /**

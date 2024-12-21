@@ -26,6 +26,6 @@ import { RolesGuard } from '../guards/roles';
     JwtStrategy, // JWT strategy for validating tokens
     RolesGuard, // Guard for role-based access control
   ],
-  exports: [UsersService],
+  exports: [UsersService,MongooseModule],
 })
 export class UsersModule {}

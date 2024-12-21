@@ -4,6 +4,7 @@ import { UsersService } from '../users/users.service';
 import { AuditService } from 'src/audit/audit.service';
 import * as bcrypt from 'bcrypt';
 
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -62,3 +63,4 @@ export class AuthService {
     return { mfaToken };
   }
 }
+

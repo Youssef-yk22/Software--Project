@@ -1,29 +1,30 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, ExtractJwt } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly usersService: UsersService
+  ) {
     super({
-      // Extract JWT from the Authorization header
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      // Use the secret key from the environment variable
       secretOrKey: configService.get<string>('JWT_SECRET'),
     });
   }
 
-  /**
-   * Validates the JWT payload and returns user details.
-   * @param payload - The decoded payload of the JWT.
-   * @returns An object containing the userId, username, and role.
-   */
   async validate(payload: any) {
+    const user = await this.usersService.findById(payload.sub);
+    if (!user) {
+      throw new UnauthorizedException('User not found during JWT validation');
+    }
     return {
-      userId: payload.sub,
-      username: payload.username,
-      role: payload.role,
+      userId: user.userId,
+      username: user.name,
+      role: user.role,
     };
   }
 }

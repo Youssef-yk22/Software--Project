@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
@@ -6,6 +6,7 @@ import { JwtService } from '@nestjs/jwt';
 import { User, UserDocument } from './models/users.schema';
 import { createUserDto } from './dto/createuser.dto';
 import { updateUserDto } from './dto/updateuser.dto';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class UsersService {
@@ -20,13 +21,22 @@ export class UsersService {
    * @returns The created user record.
    */
   async create(createUserDto: createUserDto): Promise<User> {
-    const { passwordHash, ...userDetails } = createUserDto;
+    const { name, email, password, role } = createUserDto;
 
-    // Hash the password before saving
-    const hashedPassword = await bcrypt.hash(passwordHash, 10);
+    // Ensure password is not empty and is a string
+    if (!password || typeof password !== 'string') {
+      throw new Error('Password must be a string and cannot be empty.');
+    }
+
+    // Hash the password
+    const passwordHash = await bcrypt.hash(password, 10);
+
     const newUser = new this.userModel({
-      ...userDetails,
-      passwordHash: hashedPassword,
+      userId: uuidv4(),
+      name,
+      email,
+      passwordHash, // make sure this is the field name in the schema
+      role,
     });
 
     return newUser.save();
@@ -92,20 +102,36 @@ export class UsersService {
    * @param password - The user's plaintext password.
    * @returns An object containing the generated JWT token.
    */
-  async login(
-    email: string,
-    password: string,
-  ): Promise<{ accessToken: string }> {
+  async login(email: string, password: string): Promise<{ accessToken: string }> {
     // Find the user by email
     const user = await this.userModel.findOne({ email });
-    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-      throw new Error('Invalid credentials');
+    if (!user) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    // Compare the provided password with the stored hash
+    const passwordsMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!passwordsMatch) {
+      throw new UnauthorizedException('Invalid email or password');
     }
 
     // Create a payload for the JWT
-    const payload = { username: user.name, sub: user.userId, role: user.role };
+    const payload = {
+      username: user.name,
+      sub: user._id, // Typically use _id from MongoDB
+      role: user.role
+    };
 
-    // Generate and return the JWT
-    return { accessToken: this.jwtService.sign(payload) };
+    // Generate the JWT
+    const accessToken = this.jwtService.sign(payload);
+
+    return { accessToken };
+  }
+  async findById(userId: string): Promise<User | undefined> {
+    const user = await this.userModel.findById(userId).exec();
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+    return user;
   }
 }

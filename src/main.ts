@@ -10,6 +10,12 @@ async function bootstrap() {
 
   const reflector = app.get(Reflector);
   app.useGlobalGuards(new RolesGuard(reflector));
+  
+  app.enableCors({
+    origin: 'http://localhost:3001', // Frontend URL
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+  });
 
   await app.listen(3000);
   console.log('Application is running on: http://localhost:3000');
