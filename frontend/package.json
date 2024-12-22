@@ -9,14 +9,17 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.0",
+    "@heroicons/react": "^2.2.0",
     "axios": "^1.7.9",
-    "cookie-parser": "^1.4.7",
-    "next": "15.1.2",
+    "next": "^15.1.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@tailwindcss/aspect-ratio": "^0.4.2",
+    "@tailwindcss/line-clamp": "^0.4.4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

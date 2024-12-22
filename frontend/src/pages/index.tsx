@@ -1,115 +1,99 @@
-import React from 'react';
-import Link from 'next/link';
+import { useState } from 'react';
+import Navbar from '@/components/Navbar';
+import CourseCard from '@/components/CourseCard';
 
-const HomePage: React.FC = () => {
+const featuredCourses = [
+  {
+    id: '1',
+    title: 'Introduction to Web Development',
+    instructor: 'John Doe',
+    description: 'Learn the fundamentals of web development with HTML, CSS, and JavaScript.',
+    image: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1650&q=80',
+    rating: 4.8,
+    students: 15234,
+  },
+  {
+    id: '2',
+    title: 'Data Science Fundamentals',
+    instructor: 'Jane Smith',
+    description: 'Master the basics of data science and machine learning.',
+    image: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?ixlib=rb-1.2.1&auto=format&fit=crop&w=1650&q=80',
+    rating: 4.6,
+    students: 8921,
+  },
+  {
+    id: '3',
+    title: 'Mobile App Development with React Native',
+    instructor: 'Mike Johnson',
+    description: 'Build cross-platform mobile applications using React Native.',
+    image: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1650&q=80',
+    rating: 4.7,
+    students: 12543,
+  },
+];
+
+export default function Home() {
+  const [searchQuery, setSearchQuery] = useState('');
+
   return (
-    <div className="bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      
       {/* Hero Section */}
-      <header className="relative bg-white shadow">
-        <div className="container mx-auto px-6 py-16 text-center">
-          <h1 className="text-4xl font-extrabold text-gray-800 sm:text-5xl">
-            Unlock Your Potential with <span className="text-blue-600">E-Learn</span>
-          </h1>
-          <p className="mt-4 text-lg text-gray-600">
-            Join thousands of students and instructors on their journey to mastering skills and knowledge.
-          </p>
-          <div className="mt-6 flex justify-center space-x-4">
-            <Link
-              href="/auth/register"
-              className="px-6 py-3 text-white bg-blue-600 rounded-lg shadow hover:bg-blue-700"
-            >
-              Get Started
-            </Link>
-            <Link
-              href="/courses"
-              className="px-6 py-3 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-100"
-            >
-              Browse Courses
-            </Link>
+      <div className="bg-blue-600 py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl">
+              Learn Without Limits
+            </h1>
+            <p className="mx-auto mt-3 max-w-md text-base text-blue-100 sm:text-lg md:mt-5 md:max-w-3xl md:text-xl">
+              Start, switch, or advance your career with thousands of courses from world-class universities and companies.
+            </p>
+            <div className="mx-auto mt-5 max-w-md sm:flex sm:justify-center md:mt-8">
+              <div className="rounded-md shadow">
+                <input
+                  type="text"
+                  placeholder="What do you want to learn?"
+                  className="block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
           </div>
         </div>
-      </header>
+      </div>
 
-      {/* Features Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-6 text-center">
-          <h2 className="text-3xl font-bold text-gray-800">Why Choose E-Learn?</h2>
-          <p className="mt-4 text-gray-600">
-            Learn from experts, access top-notch resources, and achieve your goals.
-          </p>
-          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="p-6 bg-white rounded-lg shadow">
-              <img src="/icons/expert.svg" alt="Expert Instructors" className="mx-auto w-12" />
-              <h3 className="mt-4 text-xl font-semibold text-gray-800">Expert Instructors</h3>
-              <p className="mt-2 text-gray-600">
-                Learn from industry leaders and certified professionals.
-              </p>
-            </div>
-            <div className="p-6 bg-white rounded-lg shadow">
-              <img src="/icons/resources.svg" alt="Top Resources" className="mx-auto w-12" />
-              <h3 className="mt-4 text-xl font-semibold text-gray-800">Top Resources</h3>
-              <p className="mt-2 text-gray-600">
-                Access high-quality videos, quizzes, and interactive content.
-              </p>
-            </div>
-            <div className="p-6 bg-white rounded-lg shadow">
-              <img src="/icons/certificate.svg" alt="Certification" className="mx-auto w-12" />
-              <h3 className="mt-4 text-xl font-semibold text-gray-800">Certification</h3>
-              <p className="mt-2 text-gray-600">
-                Earn certificates to showcase your achievements.
-              </p>
-            </div>
+      {/* Featured Courses Section */}
+      <div className="py-12">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <h2 className="text-2xl font-bold text-gray-900">Featured Courses</h2>
+          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {featuredCourses.map((course) => (
+              <CourseCard key={course.id} {...course} />
+            ))}
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* Testimonials Section */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-6 text-center">
-          <h2 className="text-3xl font-bold text-gray-800">What Our Users Say</h2>
-          <p className="mt-4 text-gray-600">Hear from students and instructors who love E-Learn.</p>
-          <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="p-6 bg-gray-50 rounded-lg shadow">
-              <p className="text-gray-600 italic">
-                &quot;E-Learn transformed the way I approach learning. The resources are unmatched!&quot;
-              </p>
-              <h3 className="mt-4 text-lg font-semibold text-gray-800">- Sarah M.</h3>
-            </div>
-            <div className="p-6 bg-gray-50 rounded-lg shadow">
-              <p className="text-gray-600 italic">
-                &quot;I’ve been able to teach effectively and reach more students than ever before.&quot;
-              </p>
-              <h3 className="mt-4 text-lg font-semibold text-gray-800">- James L.</h3>
-            </div>
-            <div className="p-6 bg-gray-50 rounded-lg shadow">
-              <p className="text-gray-600 italic">
-                &quot;Highly recommended for anyone serious about upskilling.&quot;
-              </p>
-              <h3 className="mt-4 text-lg font-semibold text-gray-800">- Maria K.</h3>
-            </div>
+      {/* Categories Section */}
+      <div className="bg-white py-12">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <h2 className="text-2xl font-bold text-gray-900">Top Categories</h2>
+          <div className="mt-6 grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {['Programming', 'Data Science', 'Business', 'Design', 'Marketing', 'Photography', 'Music', 'Personal Development'].map((category) => (
+              <div
+                key={category}
+                className="group rounded-lg border border-gray-200 bg-white p-6 text-center shadow-sm transition-all hover:shadow-md"
+              >
+                <h3 className="text-lg font-medium text-gray-900 group-hover:text-blue-600">
+                  {category}
+                </h3>
+              </div>
+            ))}
           </div>
         </div>
-      </section>
-
-      {/* Call to Action */}
-      <section className="py-16 bg-blue-600 text-white">
-        <div className="container mx-auto px-6 text-center">
-          <h2 className="text-3xl font-bold">Ready to Start Your Journey?</h2>
-          <p className="mt-4">
-            Sign up today and take the first step towards achieving your goals.
-          </p>
-          <div className="mt-6">
-            <Link
-              href="/auth/register"
-              className="px-6 py-3 bg-white text-blue-600 rounded-lg shadow hover:bg-gray-100"
-            >
-              Sign Up Now
-            </Link>
-          </div>
-        </div>
-      </section>
+      </div>
     </div>
   );
-};
-
-export default HomePage;
+}
