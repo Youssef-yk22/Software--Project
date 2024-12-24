@@ -1,22 +1,31 @@
-import { useState } from 'react';
-import { useRouter } from 'next/router';
+import React, { useState } from 'react';
+import axios, { AxiosError } from 'axios';
 import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/router'; // Import useRouter for redirection after successful login
 
-export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+const LoginPage: React.FC = () => {
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
-  const router = useRouter();
-  const { login } = useAuth();
+  const router = useRouter(); // Use useRouter for navigation
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prevData => ({ ...prevData, [name]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await login(email, password);
-      router.push('/');
-    } catch (err) {
-      setError('Invalid credentials');
+      const response = await axios.post('http://localhost:3000/users/login', formData);
+      localStorage.setItem('token', response.data.token);
+      router.push('/dashboard'); // Redirect to the dashboard or a designated home page
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<{ message: string }>;
+        setError(axiosError.response?.data?.message || 'Login failed. Please try again.');
+      } else {
+        setError('An unexpected error occurred.');
+      }
     }
   };
 
@@ -42,7 +51,7 @@ export default function Login() {
                 {error}
               </div>
             )}
-            
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email address
@@ -54,8 +63,8 @@ export default function Login() {
                   type="email"
                   autoComplete="email"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={formData.email}
+                  onChange={handleChange}
                   className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                 />
               </div>
@@ -72,8 +81,8 @@ export default function Login() {
                   type="password"
                   autoComplete="current-password"
                   required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={formData.password}
+                  onChange={handleChange}
                   className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                 />
               </div>
@@ -85,7 +94,7 @@ export default function Login() {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
                 <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
                   Remember me
@@ -112,4 +121,6 @@ export default function Login() {
       </div>
     </div>
   );
-} 
+};
+
+export default LoginPage;

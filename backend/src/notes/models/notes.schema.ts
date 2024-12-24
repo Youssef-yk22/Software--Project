@@ -5,9 +5,6 @@ export type NoteDocument = Note & Document;
 
 @Schema()
 export class Note {
-  @Prop({ type: String, unique: true, required: true })
-  noteId: string;
-
   @Prop({ type: String, required: true })
   userId: string;
 

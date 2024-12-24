@@ -1,20 +1,24 @@
-import { Controller, Post, UseGuards, Request, Body } from '@nestjs/common';
+import { Controller, Post, Body } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthGuard } from '@nestjs/passport';
-
+import { UsersService } from '../users/users.service';
+import { createUserDto } from 'src/users/dto/createuser.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly usersService: UsersService,
+  ) {}
 
-  /**
-   * Handles user login and issues a JWT token.
-   * @param req - The user login request.
-   * @returns A JWT token if credentials are valid.
-   */
-  @UseGuards(AuthGuard('jwt'))
   @Post('login')
-  async login(@Request() req) {
-    return this.authService.login(req.user);
+  async login(@Body() loginDto: { email: string; password: string }) {
+    console.log('Login attempt with:', loginDto);
+    return this.authService.login(loginDto);
+  }
+
+  @Post('register')
+  async register(@Body() createUserDto: createUserDto) {
+    console.log('Registration attempt with:', createUserDto);
+    return this.usersService.create(createUserDto);
   }
 }

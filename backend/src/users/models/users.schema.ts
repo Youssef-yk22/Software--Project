@@ -1,12 +1,13 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+import { Role } from 'src/decorators/roles.enum';
 
 export type UserDocument = User & Document;
 
 @Schema()
 export class User {
-  @Prop({ type: String, unique: true, required: true })
-  userId: string;
+  //@Prop({ type: String, unique: true, required: true })
+  //userId: string;
 
   @Prop({ type: String, required: true })
   name: string;
@@ -17,12 +18,8 @@ export class User {
   @Prop({ type: String, required: true })
   passwordHash: string;
 
-  @Prop({
-    type: String,
-    enum: ['Student', 'Instructor', 'Admin'],
-    required: true,
-  })
-  role: 'Student' | 'Instructor' | 'Admin';
+  @Prop({ required: true, enum: Object.values(Role) })
+  role: Role;
 
   @Prop({ type: String })
   profilePictureUrl?: string;

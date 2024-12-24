@@ -4,7 +4,6 @@ import { UsersService } from '../users/users.service';
 import { AuditService } from 'src/audit/audit.service';
 import * as bcrypt from 'bcrypt';
 
-
 @Injectable()
 export class AuthService {
   constructor(
@@ -42,14 +41,18 @@ export class AuthService {
 
     const user = await this.usersService.findOne(email);
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-      // Log failed login attempt
-      if (user) {
-        await this.auditService.logEvent(user.userId, 'Failed login attempt');
-      }
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload = { username: user.name, sub: user.userId, role: user.role };
+    const payload = {
+      //sub: user._id.toString(),
+      email: user.email,
+      role: user.role,
+      name: user.name,
+    };
+
+    console.log('Creating token with payload:', payload);
+
     return {
       accessToken: this.jwtService.sign(payload),
     };
@@ -63,4 +66,3 @@ export class AuthService {
     return { mfaToken };
   }
 }
-

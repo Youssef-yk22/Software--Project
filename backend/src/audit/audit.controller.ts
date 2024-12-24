@@ -3,10 +3,11 @@ import { AuditService } from './audit.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/guards/roles';
 import { Roles } from 'src/decorators/roles';
+import { Role } from 'src/decorators/roles.enum';
 
 @Controller('audit')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
-@Roles('Admin') // Restrict access to admins
+@Roles(Role.Admin) // Restrict access to admins
 export class AuditController {
   constructor(private readonly auditService: AuditService) {}
 

@@ -17,9 +17,11 @@ import { createUserDto } from './dto/createuser.dto';
 import { updateUserDto } from './dto/updateuser.dto';
 import { UpdatePasswordDto } from './dto/updatePassword.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { Roles } from '../decorators/roles';
+//import { Roles } from '../decorators/roles';
 import { RolesGuard } from '../guards/roles';
-import { Response } from 'express'; 
+import { Response } from 'express';
+import { Public } from 'src/decorators/public.decorator';
+import { authorizationGaurd } from 'src/guards/authotization';
 
 @Controller('users')
 export class UsersController {
@@ -30,6 +32,7 @@ export class UsersController {
    * @param createUserDto - The user data for registration.
    * @returns The created user record.
    */
+  @Public()
   @Post('register')
   async register(@Body() createUserDto: createUserDto) {
     console.log('Received payload:', createUserDto);
@@ -42,10 +45,11 @@ export class UsersController {
    * @param password - The user's password.
    * @returns A JWT token if the credentials are valid.
    */
+  @Public()
   @Post('login')
   async login(
     @Body() { email, password }: { email: string; password: string },
-    @Res() res: Response
+    @Res() res: Response,
   ) {
     try {
       // Attempt to login and receive a JWT token
@@ -60,6 +64,7 @@ export class UsersController {
 
       // Send back a success response
       res.status(HttpStatus.OK).json({ message: 'Login successful' });
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       // If login fails, return an Unauthorized status
       throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
@@ -71,7 +76,7 @@ export class UsersController {
    * @returns A list of all users.
    */
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('Admin')
+  //@Roles('Admin')
   @Get()
   async findAll() {
     return this.usersService.findAll();
@@ -83,7 +88,7 @@ export class UsersController {
    * @param id - The unique ID of the user.
    * @returns The user record, or null if not found.
    */
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(authorizationGaurd)
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
@@ -96,7 +101,7 @@ export class UsersController {
    * @param updateUserDto - The updated user data.
    * @returns The updated user record, or null if not found.
    */
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(authorizationGaurd)
   @Put(':id')
   async update(@Param('id') id: string, @Body() updateUserDto: updateUserDto) {
     return this.usersService.update(id, updateUserDto);
@@ -109,7 +114,7 @@ export class UsersController {
    * @param updatePasswordDto - The new password data.
    * @returns The updated user record with a hashed password.
    */
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(authorizationGaurd)
   @Put(':id/password')
   async updatePassword(
     @Param('id') id: string,
@@ -125,7 +130,7 @@ export class UsersController {
    * @returns The deleted user record, or null if not found.
    */
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('Admin')
+  //@Roles('Admin')
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return this.usersService.remove(id);
@@ -138,7 +143,7 @@ export class UsersController {
    * @returns A welcome message for Admin users.
    */
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('Admin')
+  // @Roles('Admin')
   @Get('admin')
   getAdminData(@Req() req) {
     return { message: `Welcome Admin ${req.user.username}` };

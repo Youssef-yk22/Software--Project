@@ -1,10 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Model, Types } from 'mongoose';
 import { Course, CourseDocument } from 'src/courses/models/courses.schema';
 import { NotesService } from 'src/notes/notes.service';
 import { UsersService } from 'src/users/users.service';
-import { EnrollStudentDto } from './dto/enrollstudent.dto';
+//import { EnrollStudentDto } from './dto/enrollstudent.dto';
 import { UpdateStudentProfileDto } from './dto/updateprofile.dto';
 import { QuizzesService } from 'src/quizzes/quizzes.service';
 import { ResponsesService } from 'src/responses/responses.service';
@@ -13,6 +18,12 @@ import { ChatService } from 'src/chat/chat.service';
 import { NotificationService } from 'src/notification/notification.service';
 import { SendMessageDto } from 'src/chat/dto/sendmessage.dto';
 import { User, UserDocument } from '../models/users.schema';
+import {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  Enrollment,
+  EnrollmentDocument,
+} from 'src/courses/models/enrollment.schema';
+import { Note, NoteDocument } from 'src/notes/models/notes.schema';
 
 @Injectable()
 export class StudentService {
@@ -27,6 +38,10 @@ export class StudentService {
     private readonly responsesService: ResponsesService,
     private readonly chatService: ChatService,
     private readonly notificationService: NotificationService,
+    @InjectModel(Enrollment.name)
+    private enrollmentModel: Model<EnrollmentDocument>,
+    @InjectModel(Note.name)
+    private readonly noteModel: Model<NoteDocument>,
   ) {}
 
   /**
@@ -54,31 +69,75 @@ export class StudentService {
    * Browse available courses.
    */
   async browseCourses() {
-    return this.courseModel.find().select('-enrolledStudents').exec();
+    return this.courseModel.find({ status: 'Active' }).exec();
   }
 
   /**
    * Enroll a student in a course.
    */
-  async enrollInCourse(userid: string, enrollStudentDto: EnrollStudentDto) {
-    const course = await this.courseModel.findOne({
-      courseId: enrollStudentDto.courseId,
-    });
+  async enrollInCourse(userId: string, courseId: string) {
+    console.log('Enrolling with:', { userId, courseId });
 
+    // Convert userId and courseId to ObjectId
+    const userObjectId = new Types.ObjectId(userId);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const courseObjectId = new Types.ObjectId(courseId);
+
+    // First, check if the course exists using _id
+    const course = await this.courseModel.findById(courseId);
     if (!course) {
-      throw new NotFoundException('Course not found');
+      throw new NotFoundException(`Course with ID ${courseId} not found`);
     }
 
-    const userObjectId = new Types.ObjectId(userid);
-
-    if (course.enrolledStudents.includes(userObjectId)) {
-      throw new Error('User is already enrolled in this course');
+    // Check if student is already enrolled
+    const isAlreadyEnrolled = course.enrolledStudents
+      .map((id) => id.toString())
+      .includes(userObjectId.toString());
+    if (isAlreadyEnrolled) {
+      throw new ConflictException('Student is already enrolled in this course');
     }
 
-    course.enrolledStudents.push(userObjectId);
-    return course.save();
+    try {
+      // Add student to enrolledStudents array using _id
+      const updatedCourse = await this.courseModel
+        .findByIdAndUpdate(
+          courseId,
+          {
+            $push: { enrolledStudents: userObjectId },
+          },
+          {
+            new: true,
+            runValidators: true,
+          },
+        )
+        .populate('enrolledStudents');
+
+      // Create enrollment record
+      const enrollment = new this.enrollmentModel({
+        userId: userObjectId,
+        courseId: courseId, // This will store the MongoDB _id
+        enrollmentDate: new Date(),
+        status: 'active',
+      });
+
+      await enrollment.save();
+
+      console.log('Enrollment successful:', {
+        courseId,
+        userId: userObjectId,
+        enrolledStudents: updatedCourse.enrolledStudents,
+      });
+
+      return {
+        message: 'Successfully enrolled in course',
+        course: updatedCourse,
+        enrollment: enrollment,
+      };
+    } catch (error) {
+      console.error('Enrollment error:', error);
+      throw new Error(`Failed to enroll in course: ${error.message}`);
+    }
   }
-
   /**
    * Get course details for a student.
    */
@@ -100,24 +159,77 @@ export class StudentService {
   /**
    * Update a student's note.
    */
-  async updateNote(userId: string, noteId: string, updateNoteDto: any) {
-    const note = await this.notesService.findOne(noteId);
-    if (!note || note.userId !== userId) {
+  async updateNote(
+    userId: string,
+    courseId: string,
+    noteId: string,
+    updateNoteDto: { content: string },
+  ) {
+    // Convert noteId to ObjectId
+    const noteObjectId = new Types.ObjectId(noteId);
+
+    // First verify the note exists and belongs to the user
+    const note = await this.noteModel.findOne({
+      _id: noteObjectId,
+      userId: userId,
+      courseId: courseId,
+    });
+
+    if (!note) {
       throw new NotFoundException('Note not found or access denied');
     }
-    return this.notesService.update(noteId, updateNoteDto);
+
+    try {
+      const updatedNote = await this.noteModel.findByIdAndUpdate(
+        noteObjectId,
+        {
+          $set: {
+            content: updateNoteDto.content,
+            lastUpdated: new Date(),
+          },
+        },
+        { new: true },
+      );
+
+      return {
+        success: true,
+        note: updatedNote,
+      };
+    } catch (error) {
+      console.error('Error updating note:', error);
+      throw new Error(`Failed to update note: ${error.message}`);
+    }
   }
 
   /**
    * Delete a student's note.
    */
-  async deleteNote(userId: string, noteId: string) {
-    const note = await this.notesService.findOne(noteId);
-    if (!note || note.userId !== userId) {
+  async deleteNote(userId: string, courseId: string, noteId: string) {
+    // Convert noteId to ObjectId
+    const noteObjectId = new Types.ObjectId(noteId);
+
+    // First verify the note exists and belongs to the user
+    const note = await this.noteModel.findOne({
+      _id: noteObjectId,
+      userId: userId,
+      courseId: courseId,
+    });
+
+    if (!note) {
       throw new NotFoundException('Note not found or access denied');
     }
-    await this.notesService.remove(noteId);
-    return { message: 'Note deleted successfully' };
+
+    try {
+      await this.noteModel.findByIdAndDelete(noteObjectId);
+
+      return {
+        success: true,
+        message: 'Note successfully deleted',
+      };
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      throw new Error(`Failed to delete note: ${error.message}`);
+    }
   }
   /**
    * Fetch all quizzes for a course.

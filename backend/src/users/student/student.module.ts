@@ -10,12 +10,21 @@ import { ResponsesModule } from 'src/responses/responses.module';
 import { ChatModule } from 'src/chat/chat.module';
 import { NotificationModule } from 'src/notification/notification.module';
 import { User, UserSchema } from '../models/users.schema';
+import { APP_GUARD } from '@nestjs/core';
+import { ConditionalAuthGuard } from 'src/guards/authentication';
+import {
+  Enrollment,
+  EnrollmentSchema,
+} from 'src/courses/models/enrollment.schema';
+import { Note, NoteSchema } from 'src/notes/models/notes.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Course.name, schema: CourseSchema },
       { name: User.name, schema: UserSchema },
+      { name: Enrollment.name, schema: EnrollmentSchema },
+      { name: Note.name, schema: NoteSchema },
     ]),
     NotesModule,
     UsersModule,
@@ -23,8 +32,15 @@ import { User, UserSchema } from '../models/users.schema';
     ResponsesModule,
     ChatModule,
     NotificationModule,
+    NotesModule,
   ],
   controllers: [StudentController],
-  providers: [StudentService],
+  providers: [
+    StudentService,
+    {
+      provide: APP_GUARD,
+      useClass: ConditionalAuthGuard,
+    },
+  ],
 })
 export class StudentModule {}

@@ -18,10 +18,12 @@ import { Roles } from 'src/decorators/roles';
 import { updateUserDto } from 'src/users/dto/updateuser.dto';
 import { NotificationService } from 'src/notification/notification.service';
 import { FeedbackService } from 'src/feedback/feedback.service';
+import { Role } from 'src/decorators/roles.enum';
+import { authorizationGaurd } from 'src/guards/authotization';
 
 @Controller('admin')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
-@Roles('Admin') // Ensure all routes are admin-restricted
+@Roles(Role.Admin) // Ensure all routes are admin-restricted
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
@@ -33,6 +35,7 @@ export class AdminController {
   /**
    * Register a new admin.
    */
+  @UseGuards(authorizationGaurd)
   @Post('register')
   async registerAdmin(@Body() createAdminDto: CreateAdminDto) {
     return this.adminService.registerAdmin(createAdminDto);
@@ -41,6 +44,7 @@ export class AdminController {
   /**
    * Admin login endpoint.
    */
+  @UseGuards(authorizationGaurd)
   @Post('login')
   async login(@Body() loginDto: LoginAdminDto) {
     return this.authService.login(loginDto);
@@ -49,11 +53,12 @@ export class AdminController {
   /**
    * Fetch all users.
    */
+  @UseGuards(authorizationGaurd)
   @Get('users')
   async getAllUsers() {
     return this.adminService.getAllUsers();
   }
-
+  @UseGuards(authorizationGaurd)
   @Put('users/:id')
   async updateUser(
     @Param('id') userId: string,
@@ -65,6 +70,7 @@ export class AdminController {
   /**
    * Delete a user.
    */
+  @UseGuards(authorizationGaurd)
   @Delete('users/:id')
   async deleteUser(@Param('id') userId: string) {
     return this.adminService.deleteUser(userId);
@@ -72,6 +78,7 @@ export class AdminController {
   /**
    * View all courses.
    */
+  @UseGuards(authorizationGaurd)
   @Get('courses')
   async getAllCourses() {
     return this.adminService.getAllCourses();
@@ -81,6 +88,7 @@ export class AdminController {
    * Archive a course.
    * @param courseId - The ID of the course to archive.
    */
+  @UseGuards(authorizationGaurd)
   @Put('courses/:courseId/archive')
   async archiveCourse(@Param('courseId') courseId: string) {
     return this.adminService.archiveCourse(courseId);
@@ -90,6 +98,7 @@ export class AdminController {
    * Delete a course.
    * @param courseId - The ID of the course to delete.
    */
+  @UseGuards(authorizationGaurd)
   @Delete('courses/:courseId')
   async deleteCourse(@Param('courseId') courseId: string) {
     return this.adminService.deleteCourse(courseId);
@@ -97,6 +106,7 @@ export class AdminController {
   /**
    * Send a platform-wide announcement.
    */
+  @UseGuards(authorizationGaurd)
   @Post('announce')
   async sendAnnouncement(@Body() { content }: { content: string }) {
     return this.notificationService.broadcastNotification(content);
@@ -104,6 +114,7 @@ export class AdminController {
   /**
    * Fetch all feedback.
    */
+  @UseGuards(authorizationGaurd)
   @Get('feedback')
   async getAllFeedback() {
     return this.feedbackService.getAllFeedback();
@@ -113,6 +124,7 @@ export class AdminController {
    * Delete specific feedback.
    * @param feedbackId - The ID of the feedback to delete.
    */
+  @UseGuards(authorizationGaurd)
   @Delete('feedback/:feedbackId')
   async deleteFeedback(@Param('feedbackId') feedbackId: string) {
     return this.feedbackService.deleteFeedback(feedbackId);

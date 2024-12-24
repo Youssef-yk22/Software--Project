@@ -19,10 +19,12 @@ import { createModuleDto } from 'src/modules/dto/createmodule.dto';
 import { createQuizDto } from 'src/quizzes/dto/createquiz.dto';
 import { updateCourseDto } from 'src/courses/dto/updatecourse.dto';
 import { ChatService } from 'src/chat/chat.service';
+import { Role } from 'src/decorators/roles.enum';
+import { authorizationGaurd } from 'src/guards/authotization';
 
 @Controller('instructors')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
-@Roles('Instructor') // Restrict routes to instructors only
+@Roles(Role.Instructor) // Restrict routes to instructors only
 export class InstructorController {
   constructor(
     private readonly instructorService: InstructorService,
@@ -33,6 +35,7 @@ export class InstructorController {
    * Register a new instructor.
    * @param createInstructorDto - The instructor's registration data.
    */
+  @UseGuards(authorizationGaurd)
   @Post('register')
   async registerInstructor(@Body() createInstructorDto: CreateInstructorDto) {
     return this.instructorService.registerInstructor(createInstructorDto);
@@ -43,6 +46,7 @@ export class InstructorController {
    * @param req - The authenticated instructor's request.
    * @param updateInstructorDto - Updated profile details.
    */
+  @UseGuards(authorizationGaurd)
   @Put('profile')
   async updateProfile(
     @Req() req,
@@ -55,6 +59,7 @@ export class InstructorController {
    * Fetch all courses created by the instructor.
    * @param req - The authenticated instructor's request.
    */
+  @UseGuards(authorizationGaurd)
   @Get('courses')
   async getInstructorCourses(@Req() req) {
     const userId = req.user.userId;
@@ -65,6 +70,7 @@ export class InstructorController {
    * @param req - The authenticated instructor's request.
    * @param createCourseDto - The course creation data.
    */
+  @UseGuards(authorizationGaurd)
   @Post('courses')
   async createCourse(@Req() req, @Body() createCourseDto: createCourseDto) {
     const userId = req.user.userId;
@@ -74,6 +80,7 @@ export class InstructorController {
    * Add a module to a course.
    * @param createModuleDto - The module creation data.
    */
+  @UseGuards(authorizationGaurd)
   @Post('courses/modules')
   async addModule(@Body() createModuleDto: createModuleDto) {
     return this.instructorService.addModule(createModuleDto);
@@ -82,6 +89,7 @@ export class InstructorController {
    * Create a quiz for a module.
    * @param createQuizDto - The quiz creation data.
    */
+  @UseGuards(authorizationGaurd)
   @Post('courses/modules/quizzes')
   async createQuiz(@Body() createQuizDto: createQuizDto) {
     return this.instructorService.createQuiz(createQuizDto);
@@ -91,6 +99,7 @@ export class InstructorController {
    * @param courseId - The ID of the course to update.
    * @param updateCourseDto - The course update data.
    */
+  @UseGuards(authorizationGaurd)
   @Put('courses/:courseId')
   async updateCourse(
     @Param('courseId') courseId: string,
@@ -101,6 +110,7 @@ export class InstructorController {
   /**
    * Get all versions of a course.
    */
+  @UseGuards(authorizationGaurd)
   @Get(':courseId/versions')
   async getCourseVersions(@Param('courseId') courseId: string) {
     return this.instructorService.getCourseVersions(courseId);
@@ -109,6 +119,7 @@ export class InstructorController {
    * Get student progress for a course.
    * @param courseId - The ID of the course.
    */
+  @UseGuards(authorizationGaurd)
   @Get('courses/:courseId/progress')
   async getStudentProgress(@Param('courseId') courseId: string) {
     return this.instructorService.getStudentProgress(courseId);
@@ -118,10 +129,12 @@ export class InstructorController {
    * Get engagement report for a course.
    * @param courseId - The ID of the course.
    */
+  @UseGuards(authorizationGaurd)
   @Get('courses/:courseId/engagement')
   async getEngagementReport(@Param('courseId') courseId: string) {
     return this.instructorService.getEngagementReport(courseId);
   }
+  @UseGuards(authorizationGaurd)
   @Post('courses/:courseId/announcements')
   async postAnnouncement(
     @Req() req,
@@ -135,6 +148,7 @@ export class InstructorController {
       content,
     );
   }
+  @UseGuards(authorizationGaurd)
   @Post('courses/:courseId/chats/:messageId/reply')
   async respondToQuery(
     @Req() req,
@@ -150,11 +164,12 @@ export class InstructorController {
       reply,
     );
   }
+  @UseGuards(authorizationGaurd)
   @Get('courses/:courseId/modules')
   async getModulesByCourse(@Param('courseId') courseId: string) {
     return this.instructorService.getModulesByCourse(courseId);
   }
-
+  @UseGuards(authorizationGaurd)
   @Put('modules/:moduleId')
   async updateModule(
     @Param('moduleId') moduleId: string,
@@ -162,10 +177,12 @@ export class InstructorController {
   ) {
     return this.instructorService.updateModule(moduleId, updateModuleDto);
   }
+  @UseGuards(authorizationGaurd)
   @Get('courses/:courseId/feedback')
   async getFeedbackByCourse(@Param('courseId') courseId: string) {
     return this.instructorService.viewFeedback(courseId);
   }
+  @UseGuards(authorizationGaurd)
   @Put('courses/:courseId/quizzes/:quizId')
   async updateQuiz(
     @Param('courseId') courseId: string,

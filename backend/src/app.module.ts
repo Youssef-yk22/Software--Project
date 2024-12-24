@@ -18,6 +18,8 @@ import { ChatModule } from './chat/chat.module';
 import { FeedbackModule } from './feedback/feedback.module';
 import { NotificationModule } from './notification/notification.module';
 import { InstructorModule } from './users/instructor/instructor.module';
+//import { AuthGuard } from '@nestjs/passport';
+//import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
