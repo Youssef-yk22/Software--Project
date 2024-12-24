@@ -17,7 +17,7 @@ const AdminUsersPage: React.FC = () => {
   // Fetch users when the component mounts
   useEffect(() => {
     axios
-      .get('http://localhost:3000/admin/users') 
+      .get('http://localhost:3000/admin/users') // Replace with your API URL
       .then((response) => {
         setUsers(response.data.map((user: any) => ({ ...user, id: user._id }))); // Map _id to id
         setIsLoading(false);
@@ -37,7 +37,7 @@ const AdminUsersPage: React.FC = () => {
     }
 
     axios
-      .delete(`http://localhost:3000/admin/users/${id}`) 
+      .delete(`http://localhost:3000/admin/users/${id}`) // Replace with your API URL
       .then(() => {
         alert(`User with ID ${id} deleted successfully!`);
         setUsers((prev) => prev.filter((user) => user.id !== id));
