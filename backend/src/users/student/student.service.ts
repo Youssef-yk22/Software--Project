@@ -24,6 +24,7 @@ import {
   EnrollmentDocument,
 } from 'src/courses/models/enrollment.schema';
 import { Note, NoteDocument } from 'src/notes/models/notes.schema';
+import { Notification, NotificationDocument } from '../../notification/models/notification.schema';
 
 @Injectable()
 export class StudentService {
@@ -42,7 +43,11 @@ export class StudentService {
     private enrollmentModel: Model<EnrollmentDocument>,
     @InjectModel(Note.name)
     private readonly noteModel: Model<NoteDocument>,
-  ) {}
+    @InjectModel(Notification.name)
+    private notificationModel: Model<NotificationDocument>,
+  ) {
+    console.log('NotificationModel injected:', !!this.notificationModel);
+  }
 
   /**
    * Register a new student (handled in UsersService).
@@ -293,11 +298,21 @@ export class StudentService {
    * Validate that a course exists.
    * @param courseId - The ID of the course.
    */
-  async validateCourseExistence(courseId: string) {
-    // This method assumes a CourseService or similar exists
-    const course = await this.usersService.findOne(courseId); // Adjust with your course validation logic
-    if (!course) {
-      throw new NotFoundException(`Course with ID ${courseId} not found`);
+  private async validateCourseExistence(courseId: string) {
+    try {
+      const course = await this.courseModel.findById(courseId);
+      
+      if (!course) {
+        throw new NotFoundException(`Course with ID ${courseId} not found`);
+      }
+      
+      return course;
+    } catch (error) {
+      console.error('Error validating course:', error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new NotFoundException(`Invalid course ID or course not found`);
     }
   }
 
@@ -322,37 +337,80 @@ export class StudentService {
     userId: string,
     sendMessageDto: SendMessageDto,
   ) {
-    // Validate course existence
-    await this.validateCourseExistence(courseId);
+    console.log('Starting sendMessageAndNotify:', { courseId, userId, message: sendMessageDto });
 
-    // Send the message
-    const message = await this.chatService.sendMessage(
-      courseId,
-      userId,
-      sendMessageDto,
-    );
+    try {
+      // Validate course existence and get course details
+      const course = await this.validateCourseExistence(courseId);
+      console.log('Course found:', course);
 
-    // Fetch students enrolled in the course
-    const enrolledStudents = await this.userModel
-      .find({ enrolledCourses: courseId })
-      .exec();
+      // Send the message
+      const message = await this.chatService.sendMessage(
+        courseId,
+        userId,
+        sendMessageDto,
+      );
 
-    // Notify all students except the sender
-    const notifications = enrolledStudents
-      .filter((student) => student.id !== userId)
-      .map((student) => ({
-        userId: student.id,
-        content: `New message in course ${courseId}: "${sendMessageDto.message}"`,
-      }));
+      // Get the enrolled students from the course document
+      const enrolledStudentIds = course.enrolledStudents || [];
+      console.log('Enrolled student IDs:', enrolledStudentIds);
 
-    await Promise.all(
-      notifications.map((notification) =>
-        this.notificationService.createNotification(notification.userId, {
+      // Fetch the enrolled students' details
+      const enrolledStudents = await this.userModel
+        .find({ 
+          _id: { 
+            $in: enrolledStudentIds,
+            $ne: new Types.ObjectId(userId) // Exclude the sender
+          }
+        })
+        .exec();
+
+      console.log('Found enrolled students:', enrolledStudents.length);
+
+      // Create notifications
+      const createdNotifications = [];
+      
+      for (const student of enrolledStudents) {
+        try {
+          const studentId = student._id.toString();
+          
+          const notificationData = {
+            userId: new Types.ObjectId(studentId),
+            content: `New message in ${course.title}: "${sendMessageDto.message}"`,
+            read: false,
+            global: false,
+            timestamp: new Date()
+          };
+
+          console.log('Creating notification with data:', notificationData);
+
+          const notification = await this.notificationModel.create(notificationData);
+          console.log('Created notification:', notification);
+          createdNotifications.push(notification);
+
+        } catch (notifError) {
+          console.error('Error creating notification for student:', student._id, notifError);
+        }
+      }
+
+      // Log all created notifications
+      console.log('Created notifications:', createdNotifications);
+
+      return {
+        success: true,
+        message: message,
+        notifications: createdNotifications.map(notification => ({
+          _id: notification._id,
+          userId: notification.userId,
           content: notification.content,
-        }),
-      ),
-    );
+          read: notification.read,
+          timestamp: notification.timestamp
+        }))
+      };
 
-    return message;
+    } catch (error) {
+      console.error('Error in sendMessageAndNotify:', error);
+      throw new Error(`Failed to send message and notifications: ${error.message}`);
+    }
   }
 }

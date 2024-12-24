@@ -14,9 +14,28 @@ export class FeedbackService {
    * @param userId - The ID of the user.
    * @param content - The feedback content.
    */
-  async submitFeedback(userId: string, content: string) {
-    const feedback = new this.feedbackModel({ userId, content });
-    return feedback.save();
+  async create(userId: string, content: string) {
+    try {
+      const feedback = await this.feedbackModel.create({
+        userId: userId, // Explicitly set the userId
+        content: content,
+      });
+
+      console.log('Created feedback:', feedback);
+
+      return {
+        success: true,
+        feedback: {
+          _id: feedback._id,
+          userId: feedback.userId,
+          content: feedback.content,
+          createdAt: feedback.createdAt,
+        },
+      };
+    } catch (error) {
+      console.error('Error creating feedback:', error);
+      throw new Error(`Failed to create feedback: ${error.message}`);
+    }
   }
 
   /**

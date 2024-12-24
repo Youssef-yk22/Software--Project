@@ -1,4 +1,12 @@
-import { Controller, Post, Get, Body, UseGuards, Param } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  UseGuards,
+  Param,
+  Req,
+} from '@nestjs/common';
 import { FeedbackService } from './feedback.service';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -13,10 +21,9 @@ export class FeedbackController {
    * @param body - The feedback content.
    */
   @Post()
-  async submitFeedback(
-    @Body() { userId, content }: { userId: string; content: string },
-  ) {
-    return this.feedbackService.submitFeedback(userId, content);
+  async create(@Req() req, @Body() body: { content: string }) {
+    const userId = req.user.userId; // Get userId from JWT token
+    return this.feedbackService.create(userId, body.content);
   }
 
   /**

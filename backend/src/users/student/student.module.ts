@@ -17,6 +17,10 @@ import {
   EnrollmentSchema,
 } from 'src/courses/models/enrollment.schema';
 import { Note, NoteSchema } from 'src/notes/models/notes.schema';
+import { Notification, NotificationSchema } from '../../notification/models/notification.schema';
+import { NotificationService } from 'src/notification/notification.service';
+import { ChatService } from 'src/chat/chat.service';
+import { Chat, ChatSchema } from 'src/chat/models/chat.schema';
 
 @Module({
   imports: [
@@ -25,6 +29,8 @@ import { Note, NoteSchema } from 'src/notes/models/notes.schema';
       { name: User.name, schema: UserSchema },
       { name: Enrollment.name, schema: EnrollmentSchema },
       { name: Note.name, schema: NoteSchema },
+      { name: Notification.name, schema: NotificationSchema },
+      {name: Chat.name, schema: ChatSchema },
     ]),
     NotesModule,
     UsersModule,
@@ -37,6 +43,8 @@ import { Note, NoteSchema } from 'src/notes/models/notes.schema';
   controllers: [StudentController],
   providers: [
     StudentService,
+    NotificationService,
+    ChatService,
     {
       provide: APP_GUARD,
       useClass: ConditionalAuthGuard,

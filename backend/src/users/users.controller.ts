@@ -63,7 +63,7 @@ export class UsersController {
       });
 
       // Send back a success response
-      res.status(HttpStatus.OK).json({ message: 'Login successful' });
+      res.status(HttpStatus.OK).json({ message: 'Login successful', token: accessToken });
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       // If login fails, return an Unauthorized status

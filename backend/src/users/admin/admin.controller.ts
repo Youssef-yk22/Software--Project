@@ -5,25 +5,27 @@ import {
   Get,
   Delete,
   Param,
-  UseGuards,
   Put,
+  BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { AuthService } from 'src/auth/auth.service';
 import { CreateAdminDto } from './dto/createadmin.dto';
 import { LoginAdminDto } from './dto/loginadmin.dto';
-import { AuthGuard } from '@nestjs/passport';
-import { RolesGuard } from 'src/guards/roles';
-import { Roles } from 'src/decorators/roles';
 import { updateUserDto } from 'src/users/dto/updateuser.dto';
 import { NotificationService } from 'src/notification/notification.service';
 import { FeedbackService } from 'src/feedback/feedback.service';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { AuthGuard } from '@nestjs/passport';
+import { Roles } from 'src/decorators/roles';
 import { Role } from 'src/decorators/roles.enum';
+import { Public } from 'src/decorators/public.decorator';
 import { authorizationGaurd } from 'src/guards/authotization';
 
 @Controller('admin')
-@UseGuards(AuthGuard('jwt'), RolesGuard)
-@Roles(Role.Admin) // Ensure all routes are admin-restricted
+//@UseGuards(AuthGuard('jwt'))
+//@Roles(Role.Admin)
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
@@ -31,102 +33,78 @@ export class AdminController {
     private readonly notificationService: NotificationService,
     private readonly feedbackService: FeedbackService,
   ) {}
-
-  /**
-   * Register a new admin.
-   */
-  @UseGuards(authorizationGaurd)
+  @Public()
   @Post('register')
   async registerAdmin(@Body() createAdminDto: CreateAdminDto) {
     return this.adminService.registerAdmin(createAdminDto);
   }
-
-  /**
-   * Admin login endpoint.
-   */
-  @UseGuards(authorizationGaurd)
+  @Public()
   @Post('login')
   async login(@Body() loginDto: LoginAdminDto) {
     return this.authService.login(loginDto);
   }
-
-  /**
-   * Fetch all users.
-   */
   @UseGuards(authorizationGaurd)
+  @Roles(Role.Admin)
   @Get('users')
   async getAllUsers() {
     return this.adminService.getAllUsers();
   }
   @UseGuards(authorizationGaurd)
+  @Roles(Role.Admin)
   @Put('users/:id')
   async updateUser(
     @Param('id') userId: string,
     @Body() updateUserDto: updateUserDto,
   ) {
+    if (!userId) throw new BadRequestException('User ID is required.');
     return this.adminService.updateUser(userId, updateUserDto);
   }
-
-  /**
-   * Delete a user.
-   */
   @UseGuards(authorizationGaurd)
+  @Roles(Role.Admin)
   @Delete('users/:id')
   async deleteUser(@Param('id') userId: string) {
+    if (!userId) throw new BadRequestException('User ID is required.');
     return this.adminService.deleteUser(userId);
   }
-  /**
-   * View all courses.
-   */
   @UseGuards(authorizationGaurd)
+  @Roles(Role.Admin)
   @Get('courses')
   async getAllCourses() {
     return this.adminService.getAllCourses();
   }
-
-  /**
-   * Archive a course.
-   * @param courseId - The ID of the course to archive.
-   */
   @UseGuards(authorizationGaurd)
+  @Roles(Role.Admin)
   @Put('courses/:courseId/archive')
   async archiveCourse(@Param('courseId') courseId: string) {
+    if (!courseId) throw new BadRequestException('Course ID is required.');
     return this.adminService.archiveCourse(courseId);
   }
-
-  /**
-   * Delete a course.
-   * @param courseId - The ID of the course to delete.
-   */
   @UseGuards(authorizationGaurd)
+  @Roles(Role.Admin)
   @Delete('courses/:courseId')
   async deleteCourse(@Param('courseId') courseId: string) {
+    if (!courseId) throw new BadRequestException('Course ID is required.');
     return this.adminService.deleteCourse(courseId);
   }
-  /**
-   * Send a platform-wide announcement.
-   */
   @UseGuards(authorizationGaurd)
+  @Roles(Role.Admin)
   @Post('announce')
   async sendAnnouncement(@Body() { content }: { content: string }) {
+    if (!content)
+      throw new BadRequestException('Announcement content is required.');
     return this.notificationService.broadcastNotification(content);
   }
-  /**
-   * Fetch all feedback.
-   */
   @UseGuards(authorizationGaurd)
+  @Roles(Role.Admin)
   @Get('feedback')
   async getAllFeedback() {
     return this.feedbackService.getAllFeedback();
   }
-
-  /**
-   * Delete specific feedback.
-   * @param feedbackId - The ID of the feedback to delete.
-   */
   @UseGuards(authorizationGaurd)
+  @Roles(Role.Admin)
   @Delete('feedback/:feedbackId')
   async deleteFeedback(@Param('feedbackId') feedbackId: string) {
+    if (!feedbackId) throw new BadRequestException('Feedback ID is required.');
     return this.feedbackService.deleteFeedback(feedbackId);
   }
 }

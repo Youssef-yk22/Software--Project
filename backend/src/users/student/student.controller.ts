@@ -131,7 +131,14 @@ export class StudentController {
     @Param('courseId') courseId: string,
     @Body() sendMessageDto: SendMessageDto,
   ) {
-    const userId = req.user.userid;
+    const userId = req.user.userId;
+    
+    console.log('Sending message:', {
+      userId,
+      courseId,
+      message: sendMessageDto
+    });
+
     return this.studentService.sendMessageAndNotify(
       courseId,
       userId,
