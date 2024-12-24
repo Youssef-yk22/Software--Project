@@ -1,174 +1,140 @@
-import { useState } from 'react';
-import Navbar from '@/components/Navbar';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'student' | 'instructor' | 'admin';
-  status: 'active' | 'suspended' | 'pending';
-  joinDate: string;
-}
-
-interface Stats {
-  totalUsers: number;
-  totalCourses: number;
-  totalRevenue: number;
-  activeUsers: number;
-}
-
-const mockUsers: User[] = [
-  {
-    id: '1',
-    name: 'John Doe',
-    email: 'john@example.com',
-    role: 'student',
-    status: 'active',
-    joinDate: '2024-01-15',
-  },
-  {
-    id: '2',
-    name: 'Jane Smith',
-    email: 'jane@example.com',
-    role: 'instructor',
-    status: 'active',
-    joinDate: '2024-02-01',
-  },
-  // Add more mock users
-];
-
-const mockStats: Stats = {
-  totalUsers: 1500,
-  totalCourses: 120,
-  totalRevenue: 75000,
-  activeUsers: 890,
-};
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 
 export default function AdminDashboard() {
-  const [users] = useState<User[]>(mockUsers);
-  const [stats] = useState<Stats>(mockStats);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [userCount, setUserCount] = useState(0);
+  const [courseCount, setCourseCount] = useState(0);
+  const [feedbackCount, setFeedbackCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredUsers = users.filter(user => 
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    async function fetchMetrics() {
+      try {
+        const usersResponse = await axios.get('http://localhost:3000/admin/users');
+        const coursesResponse = await axios.get('http://localhost:3000/admin/courses');
+        const feedbackResponse = await axios.get('http://localhost:3000/admin/feedback');
+
+        setUserCount(usersResponse.data.length);
+        setCourseCount(coursesResponse.data.length);
+        setFeedbackCount(feedbackResponse.data.length);
+
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error fetching dashboard metrics:', error);
+        setIsLoading(false);
+      }
+    }
+
+    fetchMetrics();
+  }, []);
+
+  if (isLoading) {
+    return <div style={styles.loading}><p>Loading dashboard...</p></div>;
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-8">Admin Dashboard</h1>
-
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-500">Total Users</h3>
-            <p className="mt-2 text-3xl font-semibold text-gray-900">{stats.totalUsers}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-500">Total Courses</h3>
-            <p className="mt-2 text-3xl font-semibold text-gray-900">{stats.totalCourses}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-500">Total Revenue</h3>
-            <p className="mt-2 text-3xl font-semibold text-gray-900">${stats.totalRevenue}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-500">Active Users</h3>
-            <p className="mt-2 text-3xl font-semibold text-gray-900">{stats.activeUsers}</p>
-          </div>
+    <div style={styles.dashboardContainer}>
+      <h1 style={styles.header}>Admin Dashboard</h1>
+      <div style={styles.metricsContainer}>
+        <div style={styles.metricCard}>
+          <h2 style={styles.metricTitle}>Users</h2>
+          <p style={styles.metricValue}>{userCount}</p>
+          <a style={styles.link} href="/admin/users">Manage Users</a>
         </div>
 
-        {/* User Management */}
-        <div className="bg-white shadow rounded-lg overflow-hidden">
-          <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
-            <h2 className="text-lg font-medium text-gray-900">User Management</h2>
-            <div className="flex space-x-4">
-              <input
-                type="text"
-                placeholder="Search users..."
-                className="rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                Add User
-              </button>
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Role
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Join Date
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredUsers.map((user) => (
-                  <tr key={user.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{user.email}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        user.role === 'admin' 
-                          ? 'bg-purple-100 text-purple-800'
-                          : user.role === 'instructor'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-green-100 text-green-800'
-                      }`}>
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        user.status === 'active'
-                          ? 'bg-green-100 text-green-800'
-                          : user.status === 'suspended'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {user.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{user.joinDate}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button className="text-blue-600 hover:text-blue-900 mr-4">Edit</button>
-                      <button className="text-red-600 hover:text-red-900">
-                        {user.status === 'active' ? 'Suspend' : 'Activate'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div style={styles.metricCard}>
+          <h2 style={styles.metricTitle}>Courses</h2>
+          <p style={styles.metricValue}>{courseCount}</p>
+          <a style={styles.link} href="/admin/courses">Manage Courses</a>
+        </div>
+
+        <div style={styles.metricCard}>
+          <h2 style={styles.metricTitle}>Feedback</h2>
+          <p style={styles.metricValue}>{feedbackCount}</p>
+          <a style={styles.link} href="/admin/feedback">View Feedback</a>
+        </div>
+
+        <div style={styles.announcementCard}>
+          <h2 style={styles.metricTitle}>Announcements</h2>
+          <p style={styles.announcementText}>
+            Send platform-wide announcements to users and instructors.
+          </p>
+          <a style={styles.link} href="/admin/announcements">Send Announcements</a>
         </div>
       </div>
     </div>
   );
-} 
+}
+
+const styles = {
+  dashboardContainer: {
+    padding: '20px',
+    fontFamily: 'Arial, sans-serif',
+    backgroundColor: '#f5f7fa',
+    minHeight: '100vh',
+  },
+  header: {
+    fontSize: '28px',
+    fontWeight: 'bold',
+    color: '#2c3e50',
+    marginBottom: '20px',
+    textAlign: 'center' as const,
+  },
+  metricsContainer: {
+    display: 'flex',
+    gap: '20px',
+    marginBottom: '30px',
+    flexWrap: 'wrap' as const,
+    justifyContent: 'space-between' as const,
+  },
+  metricCard: {
+    flex: '1',
+    minWidth: '250px',
+    backgroundColor: '#ffffff',
+    borderRadius: '10px',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+    padding: '20px',
+    textAlign: 'center' as const,
+    border: '1px solid #ddd',
+  },
+  metricTitle: {
+    fontSize: '18px',
+    fontWeight: 'bold',
+    color: '#2c3e50',
+    marginBottom: '10px',
+  },
+  metricValue: {
+    fontSize: '24px',
+    fontWeight: 'bold',
+    color: '#1abc9c',
+    marginBottom: '10px',
+  },
+  link: {
+    textDecoration: 'none',
+    color: '#3498db',
+    fontWeight: 'bold',
+    transition: 'color 0.3s',
+  },
+  announcementCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: '10px',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+    padding: '20px',
+    textAlign: 'center' as const,
+    border: '1px solid #ddd',
+  },
+  announcementText: {
+    fontSize: '16px',
+    color: '#7f8c8d',
+    marginBottom: '10px',
+  },
+  loading: {
+    display: 'flex',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    height: '100vh',
+    backgroundColor: '#f5f7fa',
+    fontSize: '18px',
+    color: '#7f8c8d',
+  },
+};
